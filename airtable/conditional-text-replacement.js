@@ -14,12 +14,14 @@
 
 // ==================== CONFIGURATION ====================
 
-let searchTerm = input.config('searchTerm');
-let textToSearch = input.config('textToSearch');
-let textIfFound = input.config('textIfFound');
-let textIfNotFound = input.config('textIfNotFound');
+// Get the entire configuration object first
+const config = input.config();
 
-// ==================== HELPER FUNCTIONS ====================
+// Access the properties from the config object
+let searchTerm = config.searchTerm;
+let textToSearch = config.textToSearch;
+let textIfFound = config.textIfFound;
+let textIfNotFound = config.textIfNotFound;
 
 /**
  * Normalizes input to a single trimmed string value
