@@ -1,3 +1,5 @@
+//Send a Microsoft Graph HTTP request
+
 {
   "type": "OpenApiConnection",
   "inputs": {
