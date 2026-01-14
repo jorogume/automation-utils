@@ -1,0 +1,17 @@
+{
+  "type": "OpenApiConnection",
+  "inputs": {
+    "parameters": {
+      "Uri": "https://graph.microsoft.com/v1.0/teams/34d28a2a-a7fa-4176-9204-9afe53fa348c/channels",
+      "Method": "POST",
+      "Body": "{\n  \"displayName\": \"TEST-0002\",\n  \"description\": \"Shared with the whole team\",\n  \"membershipType\": \"shared\"\n}",
+      "ContentType": "application/json"
+    },
+    "host": {
+      "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+      "connection": "shared_teams",
+      "operationId": "HttpRequest"
+    }
+  },
+  "runAfter": {}
+}
