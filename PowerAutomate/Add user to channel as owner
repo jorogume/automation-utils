@@ -1,0 +1,17 @@
+{
+  "type": "OpenApiConnection",
+  "inputs": {
+    "parameters": {
+      "Uri": "https://graph.microsoft.com/v1.0/teams/34d28a2a-a7fa-4176-9204-9afe53fa348c/channels/19:tIRyPJTfrA3HwJoO-UxQ3bEwoPol27iiodf8zflLbH41@thread.tacv2/members",
+      "Method": "POST",
+      "Body": "{\n  \"@odata.type\": \"#microsoft.graph.aadUserConversationMember\",\n  \"roles\": [\"owner\"],\n  \"user@odata.bind\": \"https://graph.microsoft.com/v1.0/users('8be91b03-1f60-483e-9ebb-76c0c29685ee')\"\n}",
+      "ContentType": "application/json"
+    },
+    "host": {
+      "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+      "connection": "shared_teams",
+      "operationId": "HttpRequest"
+    }
+  },
+  "runAfter": {}
+}
