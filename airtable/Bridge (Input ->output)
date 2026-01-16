@@ -1,0 +1,6 @@
+let config = input.config();
+let value = config.value;
+
+let result = Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
+
+output.set('result', result);
