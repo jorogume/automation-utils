@@ -1,0 +1,11 @@
+let config = input.config();
+let value = config.value;
+let fallback = config.fallback;
+
+// Normalize if value comes as array
+let inputValue = Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
+
+// Use fallback if value is empty
+let result = (!inputValue || inputValue.trim() === '') ? fallback : inputValue;
+
+output.set('result', result);
