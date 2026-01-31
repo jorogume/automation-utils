@@ -1,0 +1,94 @@
+const crypto = require('crypto');
+
+// === INPUTS ===
+const apiKey = inputData.api_key || "842f08ec-a9ba-4d00-8177-19908702e507";
+const apiSecret = inputData.api_secret || "/kiC/8E6YWlb+Rszt24NZfXL/jaWakd9jFvrSaL4eUJlUSePnrsXzHqi2AuD2XRd0JA52Yl1EyxaHM/CIcrpkA==";
+
+const reportId = inputData.reportId;
+
+
+const groupId = inputData.groupId;
+
+const host = "api.risk.lseg.com";
+
+// === HELPER: Auth HMAC ===
+function generateAuth(method, endpoint, body = null) {
+  const gatewayUrl = "/screening/v3/"; 
+  const date = new Date().toUTCString();
+  let dataToSign, headers;
+  
+  if (body) {
+    const contentLength = Buffer.byteLength(body, 'utf8');
+    dataToSign = `(request-target): ${method} ${gatewayUrl}${endpoint}\nhost: ${host}\ndate: ${date}\ncontent-type: application/json\ncontent-length: ${contentLength}\n${body}`;
+    headers = `(request-target) host date content-type content-length`;
+  } else {
+    dataToSign = `(request-target): ${method} ${gatewayUrl}${endpoint}\nhost: ${host}\ndate: ${date}`;
+    headers = `(request-target) host date`;
+  }
+  
+  const signature = crypto.createHmac('sha256', apiSecret).update(dataToSign).digest('base64');
+  return {
+    authorization: `Signature keyId="${apiKey}",algorithm="hmac-sha256",headers="${headers}",signature="${signature}"`,
+    date: date,
+    contentLength: body ? String(Buffer.byteLength(body, 'utf8')) : null
+  };
+}
+
+try {
+  if (!groupId) throw new Error("Falta el Group ID en Input Data");
+
+  // Endpoint para obtener la plantilla del caso (Configuración)
+  //
+  const endpoint = `groups/${groupId}/case-template`;
+  const auth = generateAuth("get", endpoint);
+
+  console.log(`Consultando plantilla para el grupo: ${groupId}...`);
+
+  const response = await fetch(`https://${host}/screening/v3/${endpoint}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': auth.authorization,
+      'Date': auth.date
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error obteniendo template: ${response.status} - ${await response.text()}`);
+  }
+
+  const data = await response.json();
+
+  // === PROCESAR Y LIMPIAR LA SALIDA ===
+  // Vamos a crear un diccionario fácil de leer para ti
+  
+  let mapaDeCampos = {};
+  
+  // 1. Campos Secundarios (Secondary Fields) - Aquí suelen estar Nacionalidad, País, Género, etc.
+  if (data.secondaryFields) {
+      data.secondaryFields.forEach(field => {
+          // Guardamos como "Nombre Legible": "ID Técnico"
+          mapaDeCampos[`SECONDARY - ${field.label}`] = field.typeId;
+      });
+  }
+
+  // 2. Campos Personalizados (Custom Fields) - Definidos por tu empresa
+  if (data.customFields) {
+      data.customFields.forEach(field => {
+          mapaDeCampos[`CUSTOM - ${field.label}`] = field.typeId;
+      });
+  }
+
+  // Salida limpia para que la leas en Zapier
+  output = {
+    success: true,
+    groupId: groupId,
+    // Esto te dará una lista fácil de leer:
+    // Ej: "SECONDARY - Registered Country": "SFCT_6"
+    MAPA_DE_IDS: mapaDeCampos, 
+    // Data cruda por si acaso
+    raw_response: data 
+  };
+
+} catch (err) {
+  output = { success: false, error: err.message };
+}
