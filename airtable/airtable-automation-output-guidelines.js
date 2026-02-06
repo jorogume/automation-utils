@@ -235,7 +235,94 @@ output.set("count", results.length);
 output.set("results", results);
 
 
-SUMMARY
 
-This structure ensures your arrays work consistently with Airtable's Repeat action every time. The key is maintaining absolute schema consistency across all objects in the output array.
-*/
+/*
+6. Force Type Coercion Explicitly
+
+Airtable requires explicit type casting to ensure consistent schemas.
+
+// WRONG - Implicit types can cause schema detection failures
+const results = items.map(item => ({
+  id: item.id ?? null,           // Could be string, number, or null
+  count: item.count ?? 0,        // Could be string "0" or number 0
+  active: item.active ?? false   // Could be string "false" or boolean
+}));
+
+// CORRECT - Explicit type coercion
+const results = items.map(item => ({
+  id: String(item.id ?? ""),           // Always string
+  count: Number(item.count ?? 0),      // Always number
+  active: Boolean(item.active)         // Always boolean
+}));
+
+Type Coercion Rules:
+  - Strings: String(value ?? "") - Use empty string, not null
+  - Numbers: Number(value ?? 0) - Use 0 or valid number default
+  - Booleans: Boolean(value) - Coerces properly, or use ?? false
+  - Dates: String(value ?? "") - Convert to ISO string or empty
+  - Never use null for strings - always use ""
+
+7. Pre-Process Complex Transformations
+
+Extract complex operations BEFORE the return object to ensure type consistency.
+
+// WRONG - Complex operations inside object literal
+const results = items.map(item => ({
+  categories: item.tags?.join(', ') ?? null,  // Could be string OR null
+  primary: item.names?.find(n => n.main)?.value ?? ""  // Messy
+}));
+
+// CORRECT - Pre-process outside object
+const results = items.map(item => {
+  // Pre-calculate with explicit types
+  const categories = Array.isArray(item.tags) 
+    ? item.tags.join(', ') 
+    : "";
+  const primary = item.names?.find(n => n.main)?.value ?? "";
+  
+  return {
+    categories: String(categories),  // Always string
+    primary: String(primary)         // Always string
+  };
+});
+
+UPDATED OUTPUT TEMPLATE
+
+const results = rawData.map(item => {
+  // Pre-process complex values
+  const computed = item.array?.join(', ') ?? "";
+  const nested = item.obj?.nested?.value ?? "";
+  
+  return {
+    // Strings - ALWAYS use String() + ""
+    id: String(item.id ?? ""),
+    name: String(item.name ?? ""),
+    computed: String(computed),
+    
+    // Numbers - ALWAYS use Number() + 0
+    count: Number(item.count ?? 0),
+    value: Number(item.value ?? 0),
+    
+    // Booleans - ALWAYS use Boolean() or ?? false
+    isActive: Boolean(item.isActive),
+    isValid: item.isValid ?? false,
+    
+    // Status fields
+    status: item.error ? "ERROR" : "SUCCESS"
+  };
+});
+
+output.set('results', results);
+```
+
+**Resumen para el prompt template:**
+```
+"ADDITIONAL TYPE REQUIREMENTS:
+1. Wrap ALL values with explicit type constructors:
+   - String(value ?? "")
+   - Number(value ?? 0)
+   - Boolean(value)
+2. Use empty string "" for missing text, NEVER null
+3. Pre-process array joins and nested finds BEFORE the return object
+4. Example: const name = item.names?.find(n => n.type === 'PRIMARY')?.value ?? "";
+            return { name: String(name) };"
